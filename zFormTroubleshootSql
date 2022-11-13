@@ -1,0 +1,132 @@
+BEGIN 
+/*
+GZ - GENERAL DREXEL ADMIN
+FZ - FINANCE DREXEL ADMIN
+SZ - STUDENT DREXEL ADMIN
+NZ - POSITION CONTROL DREXEL ADMIN
+TZ - ACCOUNTS RECEIVABLE Drexel Admin Pages.
+RZ - FINANCIAL AID DREXEL ADMIN PAGES.
+*/
+    DECLARE 
+        formname   VARCHAR2(150) := UPPER(&formaName); 
+        formdesc   VARCHAR2(200) := ''; 
+        userid     VARCHAR2(200) :=UPPER(&userId); 
+        l_module   VARCHAR2(2) :=UPPER(&module);
+        l_count    INT; 
+        os_user_id VARCHAR2(30); 
+    BEGIN 
+        os_user_id := Sys_context('userenv', 'os_user'); 
+        dbms_output.ENABLE (buffer_size => NULL); 
+        dbms_output.Put_line('STARTING SCRIPT.'); 
+        IF formname IS NULL 
+            OR userid IS NULL THEN 
+          dbms_output.Put_line('EXITING SCRIPT VALUES TO CHECK ARE MISSING'); 
+          RETURN; 
+        END IF; 
+        --STEP 1-- DOES THE FORM EXIST IN GUBPAGE 
+        SELECT Count(*) 
+        INTO   l_count 
+        FROM   gubpage 
+        WHERE  gubpage_code = formname; 
+        dbms_output.Put_line(' GUBPAGE COUNT ' 
+                             || l_count); 
+        CASE 
+          WHEN l_count = 0 THEN 
+            dbms_output.Put_line('THIS FORM IS MISSING FROM GUBPAGE TABLE.'); 
+          /*  
+          INSERT INTO gubpage ( 
+              gubpage_code, 
+              gubpage_name, 
+              gubpage_gubmodu_code, 
+              gubpage_surrogate_id, 
+              gubpage_version, 
+              gubpage_user_id, 
+              gubpage_data_origin, 
+              gubpage_activity_date, 
+              gubpage_vpdi_code 
+          ) VALUES ( 
+              formName, 
+              formDesc, 
+              'FZ', 
+              2555, 
+              1, 
+              userid, 
+              NULL, 
+              TO_DATE('07-NOV-18','DD-MON-RR'), 
+              NULL 
+          );*/ 
+          ELSE 
+            NULL; 
+        END CASE; 
+        --STEP 2 -- CHECK IF THE FORM EXISTS IN GUBOBJS 
+        SELECT Count(*) 
+        INTO   l_count 
+        FROM   gubobjs 
+        WHERE  gubobjs_name = formname; 
+        CASE 
+          WHEN l_count = 0 THEN 
+            dbms_output.Put_line('Form ' 
+                                 ||formname 
+                                 || ' Missing From Table GUBOBJS '); 
+          ELSE 
+            NULL; 
+        END CASE; 
+        --STEP 3 -- DOES THE FORM EXIST IN GURUBOJ 
+        SELECT Count(*) 
+        INTO   l_count 
+        FROM   bansecr.guruobj b 
+        WHERE  guruobj_object = formname; 
+        CASE 
+          WHEN l_count = 0 THEN 
+            dbms_output.Put_line('Form ' 
+                                 ||formname 
+                                 || ' Missing From Table guruobj '); 
+          ELSE 
+            NULL; 
+        END CASE; 
+        --STEP 4 --DOES THE FORM EXISTS IN GUBMODU 
+        SELECT Count(*) 
+        INTO   l_count 
+        FROM   general.gubmodu 
+        WHERE  gubmodu_code = l_module; 
+        CASE 
+          WHEN l_count = 0 THEN 
+            dbms_output.Put_line('Module ' 
+                                 ||l_module 
+                                 || 
+    ' Is Missing From Table GUBMODU. USE BANNER FORMS AND INSERT INTO GUAPAGE'); 
+    ELSE 
+    NULL; 
+    END CASE; 
+    --STEP5 --CHECK IF ANYONE HAS SECURITY TO THIS FORM. 
+    SELECT Count(*) 
+    INTO   l_count 
+    FROM   bansecr.guvuacc 
+    WHERE  guvuacc_object = formname; 
+    CASE 
+    WHEN l_count = 0 THEN 
+    dbms_output.Put_line('Form ' 
+                         ||formname 
+                         || 
+' This form appears to not have security. Add Someone To Table GURUCLS To grant security to this form.'
+); 
+ELSE 
+NULL; 
+END CASE; 
+--STEP6 --CHECK IF I HAVE SECURITY. 
+SELECT Count(*) 
+INTO   l_count 
+FROM   bansecr.guvuacc 
+WHERE  guvuacc_object = formname 
+   AND Upper(guvuacc_user) = Upper(os_user_id); 
+CASE 
+WHEN l_count = 0 THEN 
+dbms_output.Put_line('You Dont Have Security To Form ' 
+                     || formname 
+                     || 
+': Add Your User Id To Table GURUCLS With An Appropiate Security Class. '); 
+ELSE 
+NULL; 
+END CASE; 
+END; 
+END;
